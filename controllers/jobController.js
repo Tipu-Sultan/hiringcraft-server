@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Job = require('../models/jobModel');
+const User = require('../models/userModel');
 
 const createJob = asyncHandler(async (req, res) => {
   const { companyName, jobTitle, location, experience, description, jobImage } = req.body;
@@ -83,6 +84,7 @@ const applyForJob = asyncHandler(async (req, res) => {
   const { jobId, fullName, email, phone, message } = req.body;
 
   const job = await Job.findById(jobId);
+  const user = await User.findById(req.user._id);
 
   if (!job) {
     res.status(404);
@@ -100,18 +102,33 @@ const applyForJob = asyncHandler(async (req, res) => {
 
   // Add applicant to job's applicants array
   job.applicants.push(applicant);
+  user.appliedJobs.push(jobId);
   await job.save();
+  await user.save();
 
-  res.status(201).json({ message: 'Job application submitted successfully' });
+  res.status(201).json({applicant, message: 'Job application submitted successfully' });
 });
 
 const viewApplicants = asyncHandler(async (req, res) => {
   try {
-    const job = await Job.findById(req.params.jobId).populate('applicants', 'name email location');
+    const job = await Job.findById(req.params.jobId).populate('applicants', 'name email address');
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
     res.json(job.applicants);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+})
+
+const viewAppliedJobs = asyncHandler(async (req, res) => {
+
+  try {
+    const user = await User.findById(req.params.userId).populate('appliedJobs', 'companyName jobTitle location');
+    if (!user) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    res.json(user.appliedJobs);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -125,5 +142,6 @@ module.exports = {
   updateJob,
   deleteJob,
   applyForJob,
-  viewApplicants
+  viewApplicants,
+  viewAppliedJobs
 };
