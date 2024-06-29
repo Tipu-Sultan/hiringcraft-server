@@ -23,6 +23,7 @@ const getUserProfileById = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      mobile: user.mobile,
       role: user.role,
       profileImage: user.profileImage,
       appliedJobs: user.appliedJobs,
@@ -78,6 +79,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
+            mobile: user.mobile,
             role: user.role,
             address: user.address,
             profileImage: user.profileImage,
@@ -101,6 +103,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
           _id: user._id,
           name: user.name,
           email: user.email,
+          mobile: user.mobile,
           role: user.role,
           address: user.address,
           profileImage: user.profileImage,
@@ -113,7 +116,9 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     // Update user details if no new profile image is uploaded
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-    user.address = req.body.address || user.address;
+    user.address = req.body.address || user.mobile;
+    user.mobile = req.body.mobile || user.mobile;
+
 
     const updatedUser = await user.save();
 
@@ -121,6 +126,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
+      mobile: updatedUser.mobile,
       role: updatedUser.role,
       address: updatedUser.address,
       profileImage: updatedUser.profileImage,
