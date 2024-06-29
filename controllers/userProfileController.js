@@ -1,16 +1,19 @@
 // controllers/userController.js
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const cloudinary = require('cloudinary').v2;
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
 const generateToken = require('../utils/generateToken');
 const dotenv = require('dotenv');
-const sendEmail = require('../utils/sendMail');
-const { generateOtp } = require('../utils/generateOtp');
-const checkPassword = require('../utils/checkPassword');
 
 dotenv.config();
-
+// Configure Cloudinary with your credentials
+cloudinary.config({
+  cloud_name: process.env.MY_CLOUD_NAME,
+  api_key: process.env.MY_API_KEY,
+  api_secret: process.env.MY_API_SECRET
+});
 
 const getUserProfileById = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.userId).select('-password -verificationToken -isVerified -isOtp -otpExpires');
@@ -38,14 +41,80 @@ const getUserProfileById = asyncHandler(async (req, res) => {
   }
 });
 
+
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
-  if (user) {
-    user.name = req.body.name|| user.name;
-    user.email = req.body.email|| user.email;
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  const profileImage = req.files && req.files['profileImage'] ? req.files['profileImage'][0] : null;
+
+  if (profileImage) {
+    // Check if user already has a profile image
+    if (user.profileImage) {
+      // Extract public ID from the existing profile image URL in Cloudinary
+      const public_id = user.profileImage.split('/').slice(-1)[0].split('.')[0];
+
+      // Delete old profile image from Cloudinary
+      cloudinary.uploader.destroy(public_id, async (error, result) => {
+        if (error) {
+          console.error('Error deleting file from Cloudinary:', error);
+          return res.status(500).json({ error: 'Error deleting file from Cloudinary.' });
+        }
+
+        // If deletion successful, proceed to upload new image
+        cloudinary.uploader.upload_stream({ resource_type: "image" }, async (error, result) => {
+          if (error) {
+            console.error('Error uploading file to Cloudinary:', error);
+            return res.status(500).json({ error: 'Error uploading file to Cloudinary.' });
+          }
+
+          user.profileImage = result.secure_url;
+          await user.save();
+          
+          res.status(200).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            address: user.address,
+            profileImage: user.profileImage,
+            token: generateToken(user._id),
+            message: "User profile image updated successfully"
+          });
+        }).end(profileImage.buffer);
+      });
+    } else {
+      // No existing profile image, directly upload the new one
+      cloudinary.uploader.upload_stream({ resource_type: "image" }, async (error, result) => {
+        if (error) {
+          console.error('Error uploading file to Cloudinary:', error);
+          return res.status(500).json({ error: 'Error uploading file to Cloudinary.' });
+        }
+
+        user.profileImage = result.secure_url;
+        await user.save();
+        
+        res.status(200).json({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          address: user.address,
+          profileImage: user.profileImage,
+          token: generateToken(user._id),
+          message: "User profile image updated successfully"
+        });
+      }).end(profileImage.buffer);
+    }
+  } else {
+    // Update user details if no new profile image is uploaded
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
     user.address = req.body.address || user.address;
-    
+
     const updatedUser = await user.save();
 
     res.status(200).json({
@@ -56,13 +125,12 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       address: updatedUser.address,
       profileImage: updatedUser.profileImage,
       token: generateToken(updatedUser._id),
-      message: "User has been updated"
-    });    
-  } else {
-    res.status(404);
-    throw new Error('User not found');
+      message: "User details updated successfully"
+    });
   }
 });
+
+
 
 const updateUserEducationProfile = asyncHandler(async (req, res) => {
   const {CourseOrBranchName, collegeOrUniversity, collegeOrUniversityAddress, passingYear, cgpaOrPercentage } = req.body.updatedEducation;
@@ -98,6 +166,7 @@ const updateUserEducationProfile = asyncHandler(async (req, res) => {
     education: newEducation
   });
 });
+
 const deleteEducationProfileData = asyncHandler(async (req, res) => {
     const { eduId } = req.query;
     
@@ -158,6 +227,7 @@ const updateUserExperianceProfile = asyncHandler(async (req, res) => {
     experience: newExperiance
   });
 });
+
 const deleteExperianceProfileData = asyncHandler(async (req, res) => {
     const { exId } = req.query;
     
@@ -218,6 +288,7 @@ const updateUserProjectProfile = asyncHandler(async (req, res) => {
     project: newProject
   });
 });
+
 const deleteProjectProfileData = asyncHandler(async (req, res) => {
     const { proId } = req.query;
     
