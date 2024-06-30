@@ -46,6 +46,25 @@ const getJobs = asyncHandler(async (req, res) => {
   res.json(jobs);
 });
 
+const filtersjobs = asyncHandler(async (req, res) => {
+  const { company, location, jobProfileType } = req.query;
+
+  let query = [];
+  if (company) query.push({ companyName: new RegExp(company, 'i') });
+  if (location) query.push({ location: new RegExp(location, 'i') });
+  if (jobProfileType) query.push({ jobTitle: new RegExp(jobProfileType, 'i') });
+
+  try {
+      const jobs = await Job.find(query.length ? { $or: query } : {});
+      if (jobs.length === 0) {
+          return res.status(404).json({ message: 'Jobs not found' });
+      }
+      res.json(jobs);
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+});
+
 const getJobspostedBy = asyncHandler(async (req, res) => {
   const { postedBy } = req.params;
 
@@ -143,5 +162,6 @@ module.exports = {
   deleteJob,
   applyForJob,
   viewApplicants,
-  viewAppliedJobs
+  viewAppliedJobs,
+  filtersjobs
 };
