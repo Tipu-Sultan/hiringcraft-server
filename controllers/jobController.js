@@ -50,27 +50,40 @@ const filtersjobs = asyncHandler(async (req, res) => {
   const { company, location, jobProfileType } = req.query;
 
   let query = {};
-  
+
   // Handle array of companies
-  if (company && Array.isArray(company)) {
-    query.companyName = { $in: company.map(c => new RegExp(c, 'i')) };
-  } else if (company) {
-    query.companyName = new RegExp(company, 'i');
+  if (company) {
+    if (Array.isArray(company)) {
+      query.companyName = { $in: company.map(c => new RegExp(c, 'i')) };
+    } else {
+      query.companyName = new RegExp(company, 'i');
+    }
   }
 
-  if (location) query.location = new RegExp(location, 'i');
-  if (jobProfileType) query.jobTitle = new RegExp(jobProfileType, 'i');
+  if (location) {
+    query.location = new RegExp(location, 'i');
+  }
+
+  // Handle array of jobProfileType
+  if (jobProfileType) {
+    if (Array.isArray(jobProfileType)) {
+      query.jobTitle = { $in: jobProfileType.map(jpt => new RegExp(jpt, 'i')) };
+    } else {
+      query.jobTitle = new RegExp(jobProfileType, 'i');
+    }
+  }
 
   try {
-      const jobs = await Job.find(query);
-      if (jobs.length === 0) {
-          return res.status(404).json({ message: 'Jobs not found' });
-      }
-      res.json(jobs);
+    const jobs = await Job.find(query);
+    if (jobs.length === 0) {
+      return res.status(404).json({ message: 'Jobs not found' });
+    }
+    res.json(jobs);
   } catch (error) {
-      res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
+
 
 
 const getJobspostedBy = asyncHandler(async (req, res) => {
@@ -133,7 +146,7 @@ const applyForJob = asyncHandler(async (req, res) => {
   await job.save();
   await user.save();
 
-  res.status(201).json({applicant, message: 'Job application submitted successfully' });
+  res.status(201).json({ applicant, message: 'Job application submitted successfully' });
 });
 
 const viewApplicants = asyncHandler(async (req, res) => {
