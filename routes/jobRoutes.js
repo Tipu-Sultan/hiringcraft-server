@@ -10,6 +10,7 @@ const {
   getJobspostedBy,
   viewAppliedJobs,
   filtersjobs,
+  cancelJobApplication,
 } = require('../controllers/jobController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -21,6 +22,6 @@ router.route('/postedBy/:postedBy').get(protect,getJobspostedBy)
 router.route('/apply').post(protect,applyForJob);
 router.route('/:id').get(getJobById).put(protect, updateJob).delete(protect, deleteJob);
 router.get('/:jobId/applicants', protect,viewApplicants );
-router.get('/:userId/applied', protect,viewAppliedJobs );
+router.route('/:userId/applied').get(protect,viewAppliedJobs ).delete(protect,cancelJobApplication);
 
 module.exports = router;

@@ -84,8 +84,6 @@ const filtersjobs = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 const getJobspostedBy = asyncHandler(async (req, res) => {
   const { postedBy } = req.params;
 
@@ -120,6 +118,35 @@ const deleteJob = asyncHandler(async (req, res) => {
   res.json({ message: 'Job removed' });
 });
 
+const cancelJobApplication = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const jobIdToDelete = req.params.userId;
+
+  // Find the user and job based on their IDs
+  const user = await User.findById(userId);
+  const job = await Job.findById(jobIdToDelete);
+
+  // Check if user and job exist
+  if (!user || !job) {
+    res.status(404);
+    throw new Error('User or Job not found');
+  }
+
+  // Remove the job ID from user's appliedJobs array
+  user.appliedJobs.pull(jobIdToDelete);
+
+  // Remove the user ID from job's applicants array
+  job.applicants.pull(userId);
+
+  // Save both documents to persist the changes
+  await user.save();
+  await job.save();
+
+  res.json({ jobId: jobIdToDelete, message: 'Job application cancelled successfully' });
+});
+
+
+
 const applyForJob = asyncHandler(async (req, res) => {
   const { jobId, fullName, email, phone, message } = req.body;
 
@@ -146,7 +173,7 @@ const applyForJob = asyncHandler(async (req, res) => {
   await job.save();
   await user.save();
 
-  res.status(201).json({ applicant, message: 'Job application submitted successfully' });
+  res.status(201).json({ jobId,applicant, message: 'Job application submitted successfully' });
 });
 
 const viewApplicants = asyncHandler(async (req, res) => {
@@ -184,5 +211,6 @@ module.exports = {
   applyForJob,
   viewApplicants,
   viewAppliedJobs,
-  filtersjobs
+  filtersjobs,
+  cancelJobApplication
 };
