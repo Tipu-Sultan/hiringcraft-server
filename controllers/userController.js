@@ -67,6 +67,7 @@ const loginUser = asyncHandler(async (req, res) => {
       address: user.address,
       appliedJobs: user.appliedJobs,
       summary: user.summary,
+      isVerified:user.isVerified,
       education: user.education,
       projects: user.projects,
       experience: user.experience,

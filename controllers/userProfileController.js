@@ -16,7 +16,7 @@ cloudinary.config({
 });
 
 const getUserProfileById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.userId).select('-password -verificationToken -isVerified -isOtp -otpExpires');
+  const user = await User.findById(req.params.userId).select('-password -verificationToken -isOtp -otpExpires');
 
   if (user) {
     res.json({
@@ -25,6 +25,7 @@ const getUserProfileById = asyncHandler(async (req, res) => {
       email: user.email,
       mobile: user.mobile,
       role: user.role,
+      isVerified: user.isVerified,
       profileImage: user.profileImage,
       appliedJobs: user.appliedJobs,
       summary: user.summary,
@@ -135,8 +136,6 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     });
   }
 });
-
-
 
 const updateUserEducationProfile = asyncHandler(async (req, res) => {
   const {CourseOrBranchName, collegeOrUniversity, collegeOrUniversityAddress, passingYear, cgpaOrPercentage } = req.body.updatedEducation;

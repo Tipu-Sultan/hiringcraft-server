@@ -16,6 +16,13 @@ const userSchema = mongoose.Schema(
     isOtp: { type: Number, default: null },
     otpExpires: { type: Date, default: null },
     summary: { type: String, default: '' },
+    profileVisibility: [{
+      email: { type: String, required: true,default: ''},
+      mobile: { type: String, required: true,default: '' },
+      resume: { type: String, required: true,default: '' },
+      passingYear: { type: String, required: true,default: '' },
+      cgpaOrPercentage: { type: String, required: true,default: '' }
+    }],
     education: [{
       CourseOrBranchName: { type: String, required: true },
       collegeOrUniversity: { type: String, required: true },

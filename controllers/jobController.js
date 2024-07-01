@@ -146,7 +146,6 @@ const cancelJobApplication = asyncHandler(async (req, res) => {
 });
 
 
-
 const applyForJob = asyncHandler(async (req, res) => {
   const { jobId, fullName, email, phone, message } = req.body;
 
