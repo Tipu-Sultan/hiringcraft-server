@@ -49,13 +49,20 @@ const getJobs = asyncHandler(async (req, res) => {
 const filtersjobs = asyncHandler(async (req, res) => {
   const { company, location, jobProfileType } = req.query;
 
-  let query = [];
-  if (company) query.push({ companyName: new RegExp(company, 'i') });
-  if (location) query.push({ location: new RegExp(location, 'i') });
-  if (jobProfileType) query.push({ jobTitle: new RegExp(jobProfileType, 'i') });
+  let query = {};
+  
+  // Handle array of companies
+  if (company && Array.isArray(company)) {
+    query.companyName = { $in: company.map(c => new RegExp(c, 'i')) };
+  } else if (company) {
+    query.companyName = new RegExp(company, 'i');
+  }
+
+  if (location) query.location = new RegExp(location, 'i');
+  if (jobProfileType) query.jobTitle = new RegExp(jobProfileType, 'i');
 
   try {
-      const jobs = await Job.find(query.length ? { $or: query } : {});
+      const jobs = await Job.find(query);
       if (jobs.length === 0) {
           return res.status(404).json({ message: 'Jobs not found' });
       }
@@ -64,6 +71,7 @@ const filtersjobs = asyncHandler(async (req, res) => {
       res.status(500).json({ message: error.message });
   }
 });
+
 
 const getJobspostedBy = asyncHandler(async (req, res) => {
   const { postedBy } = req.params;
