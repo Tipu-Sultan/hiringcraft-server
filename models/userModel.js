@@ -57,7 +57,7 @@ userSchema.pre('save', async function (next) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt); // Ensure this line is awaited
+  this.password = bcrypt.hash(this.password, salt); 
   next();
 });
 
